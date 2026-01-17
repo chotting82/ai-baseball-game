@@ -1,6 +1,7 @@
 """
-AI Baseball Game - 세 자리 숫자야구
+AI Baseball Game - 숫자야구
 사용자는 투수, AI는 타자 역할
+3자리부터 10자리까지 선택 가능
 """
 
 import random
@@ -12,7 +13,8 @@ DIGITS = list(range(1, 10))
 
 def calculate_strikes_balls(answer, guess):
     """스트라이크와 볼을 계산"""
-    strikes = sum(1 for i in range(3) if answer[i] == guess[i])
+    length = len(answer)
+    strikes = sum(1 for i in range(length) if answer[i] == guess[i])
     common = len(set(answer) & set(guess))
     return strikes, common - strikes
 
@@ -20,7 +22,8 @@ def calculate_strikes_balls(answer, guess):
 class AIBatter:
     """AI 타자 - 피드백 기반 추측"""
     
-    def __init__(self):
+    def __init__(self, length):
+        self.length = length
         self.guess_history = []
         self.feedback_history = []
     
@@ -38,14 +41,14 @@ class AIBatter:
         return True
     
     def guess_number(self):
-        """세 자리 숫자 추측"""
+        """숫자 추측"""
         if not self.guess_history:
-            guess = random.sample(DIGITS, 3)
+            guess = random.sample(DIGITS, self.length)
         else:
-            valid = [list(c) for c in permutations(DIGITS, 3)
+            valid = [list(c) for c in permutations(DIGITS, self.length)
                     if list(c) not in self.guess_history
                     and self._is_valid_guess(list(c))]
-            guess = random.choice(valid) if valid else random.sample(DIGITS, 3)
+            guess = random.choice(valid) if valid else random.sample(DIGITS, self.length)
         
         self.guess_history.append(guess)
         return guess
@@ -58,18 +61,32 @@ class BaseballGame:
     """야구 게임"""
     
     def __init__(self):
-        self.ai_batter = AIBatter()
+        self.length = 3
+        self.ai_batter = None
         self.answer = None
+    
+    def _get_length(self):
+        """자릿수 입력받기"""
+        print("\n몇 자리 숫자로 플레이하시겠습니까? (3-10)")
+        
+        while True:
+            try:
+                length = int(input(">> ").strip())
+                if 3 <= length <= 10:
+                    return length
+                print("3-10 사이의 숫자를 입력해주세요!")
+            except ValueError:
+                print("올바른 숫자를 입력해주세요!")
     
     def _get_answer(self):
         """사용자로부터 정답 입력받기"""
-        print("\n세 자리 숫자를 입력하세요 (1-9, 중복 없음)")
+        print(f"\n{self.length}자리 숫자를 입력하세요 (1-9, 중복 없음)")
         
         while True:
             try:
                 user_input = input(">> ").strip()
-                if len(user_input) != 3:
-                    print("세 자리 숫자를 입력해주세요!")
+                if len(user_input) != self.length:
+                    print(f"{self.length}자리 숫자를 입력해주세요!")
                     continue
                 
                 digits = [int(d) for d in user_input]
@@ -78,7 +95,7 @@ class BaseballGame:
                     print("1-9 사이의 숫자만 사용할 수 있습니다!")
                     continue
                 
-                if len(set(digits)) != 3:
+                if len(set(digits)) != self.length:
                     print("중복된 숫자는 사용할 수 없습니다!")
                     continue
                 
@@ -91,6 +108,9 @@ class BaseballGame:
     
     def play_round(self):
         """한 라운드 플레이"""
+        self.length = self._get_length()
+        self.ai_batter = AIBatter(self.length)
+        
         self.answer = self._get_answer()
         answer_str = self._format_number(self.answer)
         print(f"\n정답: {answer_str}")
@@ -98,7 +118,7 @@ class BaseballGame:
         
         self.ai_batter.reset()
         
-        for attempt in range(1, 1000):  # 최대 1000회 시도
+        for attempt in range(1, 1000):
             print(f"\n[시도 {attempt}회]")
             
             ai_guess = self.ai_batter.guess_number()
@@ -109,7 +129,7 @@ class BaseballGame:
             strikes, balls = calculate_strikes_balls(self.answer, ai_guess)
             self.ai_batter.record_feedback(strikes, balls)
             
-            if strikes == 3:
+            if strikes == self.length:
                 print(f"🎉 성공! {attempt}회 만에 {answer_str}를 맞췄습니다!")
                 return attempt
             
@@ -135,11 +155,11 @@ class BaseballGame:
         print("  🏟️  AI Baseball Game  🏟️")
         print("="*50)
         print("\n게임 방법:")
-        print("- 세 자리 숫자(1-9, 중복 없음)를 입력하세요")
+        print("- 3-10자리 숫자(1-9, 중복 없음)를 입력하세요")
         print("- AI가 그 숫자를 맞추려고 시도합니다")
         print("- 정확한 자리에 정확한 숫자 = 스트라이크")
         print("- 다른 자리에 숫자가 존재 = 볼")
-        print("- 3스트라이크 = 성공!\n")
+        print("- 모든 자릿수가 스트라이크 = 성공!\n")
         
         input("게임을 시작하려면 Enter를 누르세요...")
         
