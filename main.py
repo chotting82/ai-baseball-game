@@ -124,7 +124,7 @@ class BaseballGame:
             ai_guess = self.ai_batter.guess_number()
             guess_str = self._format_number(ai_guess)
             print(f"AI의 추측: {guess_str}")
-            time.sleep(0.5)
+            time.sleep(0.2)
             
             strikes, balls = calculate_strikes_balls(self.answer, ai_guess)
             self.ai_batter.record_feedback(strikes, balls)
@@ -134,7 +134,7 @@ class BaseballGame:
                 return attempt
             
             print(f"⚾ {strikes}스트라이크 {balls}볼")
-            time.sleep(0.5)
+            time.sleep(0.2)
         
         return attempt
     
